@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>APAC - Brasil v1.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+<body class="bg-slate-900 text-white font-sans p-4">
+    <div class="max-w-4xl mx-auto bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-2xl">
+        <h1 class="text-3xl font-black italic text-emerald-400 mb-8 uppercase tracking-tighter">APAC <span class="text-white text-xs">BRASIL</span></h1>
+        
+        <div class="space-y-4">
+            <input id="origem" type="text" placeholder="Origem (Rua, Cidade ou CEP)" class="w-full p-4 bg-slate-900 rounded-xl border border-slate-700 outline-none focus:border-emerald-500 transition-all">
+            <input id="destino" type="text" placeholder="Destino (Rua, Cidade ou CEP)" class="w-full p-4 bg-slate-900 rounded-xl border border-slate-700 outline-none focus:border-emerald-500 transition-all">
+            <div class="grid grid-cols-2 gap-4">
+                <input id="kml" type="number" value="2.5" step="0.1" class="p-4 bg-slate-900 rounded-xl border border-slate-700 outline-none">
+                <input id="preco" type="number" value="6.15" step="0.01" class="p-4 bg-slate-900 rounded-xl border border-slate-700 outline-none">
+            </div>
+            <button onclick="calcularReal()" id="btn" class="w-full py-5 bg-emerald-600 hover:bg-emerald-500 font-black rounded-xl transition shadow-xl uppercase tracking-widest">Diagnosticar Rota</button>
+        </div>
+
+        <div id="resultado-area" class="mt-10 hidden border-t border-slate-700 pt-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-slate-900 p-6 rounded-2xl border border-emerald-500/20">
+                    <p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Distância Real</p>
+                    <h2 id="res-dist" class="text-2xl font-black text-white"></h2>
+                    <p id="res-porcentagem" class="text-emerald-400 font-bold mt-2"></p>
+                </div>
+                <div class="bg-red-500/10 p-6 rounded-2xl border border-red-500/20">
+                    <p class="text-[10px] text-red-400 uppercase font-bold mb-1">Prejuízo na Rota</p>
+                    <h2 id="res-prejuizo" class="text-2xl font-black text-red-500"></h2>
+                </div>
+            </div>
+            <div id="mapa" class="w-full h-80 rounded-2xl mt-8 bg-slate-900 border border-slate-700"></div>
+        </div>
+    </div>
+
+    <script>
+        let map = null;
+        async function calcularReal() {
+            const btn = document.getElementById('btn');
+            btn.innerText = "PROCESSANDO...";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/calcular-real', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        origem: document.getElementById('origem').value,
+                        destino: document.getElementById('destino').value,
+                        consumo_kml: parseFloat(document.getElementById('kml').value)
+                    })
+                });
+
+                const data = await response.json();
+                document.getElementById('resultado-area').classList.remove('hidden');
+                document.getElementById('res-dist').innerText = data.distancia + " KM";
+                document.getElementById('res-porcentagem').innerText = "Economia Recuperável: " + data.resultado.economia_perc;
+                
+                const precoDiesel = parseFloat(document.getElementById('preco').value);
+                const prejuizo = (data.resultado.total_L - data.resultado.ideal_L) * precoDiesel;
+                document.getElementById('res-prejuizo').innerText = "R$ " + prejuizo.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+
+                if (map) map.remove();
+                map = L.map('mapa').setView([data.diagnostico_infra.lat_o, data.diagnostico_infra.lon_o], 12);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+                L.marker([data.diagnostico_infra.lat_o, data.diagnostico_infra.lon_o]).addTo(map).bindPopup("Origem");
+                L.marker([data.diagnostico_infra.lat_d, data.diagnostico_infra.lon_d]).addTo(map).bindPopup("Destino");
+                map.fitBounds([[data.diagnostico_infra.lat_o, data.diagnostico_infra.lon_o], [data.diagnostico_infra.lat_d, data.diagnostico_infra.lon_d]]);
+
+            } catch (e) {
+                alert("Erro ao calcular. Verifique os dados.");
+            } finally {
+                btn.innerText = "Diagnosticar Rota";
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
