@@ -60,7 +60,7 @@
             btn.disabled = true;
 
             try {
-                const res = await fetch('/calcular-real', {
+                const res = await fetch('/FazerCalculo', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -101,3 +101,4 @@
     </script>
 </body>
 </html>
+
