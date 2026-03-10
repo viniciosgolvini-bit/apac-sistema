@@ -71,14 +71,17 @@
                 L.marker([data.diagnostico_infra.lat_d, data.diagnostico_infra.lon_d]).addTo(map).bindPopup("Destino");
                 map.fitBounds([[data.diagnostico_infra.lat_o, data.diagnostico_infra.lon_o], [data.diagnostico_infra.lat_d, data.diagnostico_infra.lon_d]]);
 
-            } catch (e) {
-                alert("Erro ao calcular. Verifique os dados.");
-            } finally {
-                btn.innerText = "Diagnosticar Rota";
-                btn.disabled = false;
+           } catch (error) {
+    console.error(error);
+    alert("ERRO: " + error.message + " | Verifique os Logs do Render.");
+} finally {
+    btn.innerText = "Diagnosticar Rota";
+    btn.disabled = false;
+}
             }
         }
     </script>
 </body>
 
 </html>
+
