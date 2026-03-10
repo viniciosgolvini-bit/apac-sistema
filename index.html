@@ -3,67 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>APAC - Brasil v1.0</title>
+    <title>APAC - Logística</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
-<body class="bg-slate-900 text-white font-sans p-4">
-    <div class="max-w-4xl mx-auto bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-2xl">
-        <h1 class="text-3xl font-black italic text-emerald-400 mb-8 uppercase tracking-tighter">APAC <span class="text-white text-xs">LOGÍSTICA</span></h1>
+<body class="bg-slate-900 text-white p-4">
+    <div class="max-w-2xl mx-auto bg-slate-800 p-6 rounded-2xl shadow-2xl border border-slate-700">
+        <h1 class="text-2xl font-black italic text-emerald-400 mb-6 uppercase">APAC BRASIL</h1>
         
         <div class="space-y-4">
-            <div>
-                <label class="text-[10px] text-slate-500 font-bold uppercase ml-2">Ponto de Origem (Endereço Completo)</label>
-                <input id="origem" type="text" placeholder="Ex: Av. Plínio Kroeff, 1655, Porto Alegre" class="w-full p-4 bg-slate-900 rounded-xl border border-slate-700 outline-none focus:border-emerald-500 transition-all text-sm">
-            </div>
-            <div>
-                <label class="text-[10px] text-slate-500 font-bold uppercase ml-2">Destino Final</label>
-                <input id="destino" type="text" placeholder="Ex: Porto de Santos, SP" class="w-full p-4 bg-slate-900 rounded-xl border border-slate-700 outline-none focus:border-emerald-500 transition-all text-sm">
-            </div>
+            <input id="origem" type="text" placeholder="Origem: Rua, Número, Cidade" class="w-full p-4 bg-slate-900 rounded-lg border border-slate-700 outline-none text-sm">
+            <input id="destino" type="text" placeholder="Destino: Rua, Número, Cidade" class="w-full p-4 bg-slate-900 rounded-lg border border-slate-700 outline-none text-sm">
+            
             <div class="grid grid-cols-2 gap-4">
-                <div>
-                    <label class="text-[10px] text-slate-500 font-bold uppercase ml-2">KM/L Médio</label>
-                    <input id="kml" type="number" value="2.5" step="0.1" class="w-full p-4 bg-slate-900 rounded-xl border border-slate-700 outline-none">
-                </div>
-                <div>
-                    <label class="text-[10px] text-slate-500 font-bold uppercase ml-2">Preço Diesel (R$)</label>
-                    <input id="preco" type="number" value="6.15" step="0.01" class="w-full p-4 bg-slate-900 rounded-xl border border-slate-700 outline-none">
-                </div>
+                <input id="kml" type="number" value="2.5" step="0.1" class="p-4 bg-slate-900 rounded-lg border border-slate-700 text-sm">
+                <input id="preco" type="number" value="6.15" step="0.01" class="p-4 bg-slate-900 rounded-lg border border-slate-700 text-sm">
             </div>
-            <button onclick="calcularReal()" id="btn" class="w-full py-5 bg-emerald-600 hover:bg-emerald-500 font-black rounded-xl transition shadow-xl uppercase tracking-widest text-sm mt-4">Diagnosticar Rota Brasil</button>
+
+            <button onclick="fazerCalculo()" id="btnAtivar" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 font-bold rounded-lg uppercase transition">
+                Diagnosticar Rota
+            </button>
         </div>
 
-        <div id="resultado-area" class="mt-10 hidden border-t border-slate-700 pt-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <div class="bg-slate-900 p-6 rounded-2xl border border-emerald-500/20">
-                    <p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Distância Calculada</p>
-                    <h2 id="res-dist" class="text-3xl font-black text-white">0 KM</h2>
-                    <p id="res-porcentagem" class="text-emerald-400 font-bold mt-2 text-sm italic"></p>
+        <div id="resultado-painel" class="mt-8 hidden border-t border-slate-700 pt-6">
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-slate-900 p-4 rounded-lg border border-emerald-500/30 text-center">
+                    <p class="text-[10px] uppercase text-slate-400">Distância</p>
+                    <h2 id="exibir-dist" class="text-xl font-bold text-white"></h2>
                 </div>
-                <div class="bg-red-500/10 p-6 rounded-2xl border border-red-500/20 text-center">
-                    <p class="text-[10px] text-red-400 uppercase font-bold mb-1 text-left">Prejuízo Estimado</p>
-                    <h2 id="res-prejuizo" class="text-3xl font-black text-red-500">R$ 0,00</h2>
+                <div class="bg-red-500/10 p-4 rounded-lg border border-red-500/30 text-center">
+                    <p class="text-[10px] uppercase text-red-400">Prejuízo R$</p>
+                    <h2 id="exibir-prejuizo" class="text-xl font-bold text-red-500"></h2>
                 </div>
             </div>
-            <div id="mapa" class="w-full h-80 rounded-2xl bg-slate-900 border border-slate-700 z-10"></div>
+            <div id="mapa-v" class="w-full h-64 rounded-lg bg-slate-900 border border-slate-700"></div>
         </div>
     </div>
 
     <script>
-        let map = null;
+        let mapaObj = null;
 
-        async function calcularReal() {
-            const btn = document.getElementById('btn');
-            const origemInput = document.getElementById('origem').value;
-            const destinoInput = document.getElementById('destino').value;
-            const kmlInput = document.getElementById('kml').value;
-            const precoInput = document.getElementById('preco').value;
+        async function fazerCalculo() {
+            const btn = document.getElementById('btnAtivar');
+            const origem = document.getElementById('origem').value;
+            const destino = document.getElementById('destino').value;
+            const kml = document.getElementById('kml').value;
+            const preco = document.getElementById('preco').value;
 
-            if (!origemInput || !destinoInput) {
-                alert("Por favor, preencha a origem e o destino.");
+            if (!origem || !destino) {
+                alert("Preencha os endereços!");
                 return;
             }
 
-            btn.innerText = "LOCALIZANDO GPS...";
+            btn.innerText = "CALCULANDO...";
             btn.disabled = true;
+
+            try {
+                const res = await fetch('/calcular-real', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        origem: origem,
+                        destino: destino,
+                        consumo_kml: parseFloat(kml)
+                    })
+                });
+
+                if (!res.ok) throw new Error("Erro no servidor");
+
+                const data = await res.json();
+
+                // Mostra os resultados
+                document.getElementById('resultado-painel').classList.remove('hidden');
+                document.getElementById('exibir-dist').innerText = data.distancia + " KM";
+                
+                const perda = (data.resultado.total_L - data.resultado.ideal_L) * parseFloat(preco);
+                document.getElementById('exibir-prejuizo').innerText = "R$ " + perda.toFixed(2);
+
+                // Mapa
+                if (mapaObj) mapaObj.remove();
+                mapaObj = L.map('mapa-v').setView([data.diagnostico_infra.lat_o, data.diagnostico_infra.lon_o], 12);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapaObj);
+                L.marker([data.diagnostico_infra.lat_o, data.diagnostico_infra.lon_o]).addTo(mapaObj);
+                L.marker([data.diagnostico_infra.lat_d, data.diagnostico_infra.lon_d]).addTo(mapaObj);
+
+                const bounds = L.latLngBounds([data.diagnostico_infra.lat_o, data.diagnostico_infra.lon_o], [data.diagnostico_infra.lat_d, data.diagnostico_infra.lon_d]);
+                mapaObj.fitBounds(bounds);
+
+            } catch (err) {
+                alert("Erro: " + err.message);
+            } finally {
+                btn.innerText = "Diagnosticar Rota";
+                btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
