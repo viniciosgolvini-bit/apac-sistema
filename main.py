@@ -11,7 +11,7 @@ import re
 app = FastAPI()
 
 # Configuração de Segurança Simples
-ADMIN_PASSWORD = "apac2026" # <--- MUDE SUA SENHA AQUI
+ADMIN_PASSWORD = "apac2026" # <--- apac2026
 
 app.add_middleware(
     CORSMiddleware,
@@ -86,3 +86,4 @@ async def calcular_real(dados: DadosRota):
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
