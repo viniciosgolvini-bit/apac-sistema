@@ -45,13 +45,13 @@
             btn.disabled = true;
 
             try {
-                const response = await fetch('/calcular-real', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        origem: document.getElementById('origem').value,
-                        destino: document.getElementById('destino').value,
-                        consumo_kml: parseFloat(document.getElementById('kml').value)
+                const response = await fetch('/calcular-real', { 
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+        origem: document.getElementById('origem').value,
+        destino: document.getElementById('destino').value,
+        consumo_kml: parseFloat(document.getElementById('kml').value)
                     })
                 });
 
@@ -80,4 +80,5 @@
         }
     </script>
 </body>
+
 </html>
