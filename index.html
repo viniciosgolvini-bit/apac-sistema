@@ -2,123 +2,114 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>APAC - Sistema Restrito</title>
+    <title>APAC - Brasil</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
-<body class="bg-slate-900 text-white p-4 font-sans">
+<body class="bg-slate-900 text-white font-sans p-4">
 
-    <div id="login-screen" class="fixed inset-0 bg-slate-900 z-[100] flex items-center justify-center p-6">
-        <div class="max-w-md w-full bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-2xl text-center">
-            <h1 class="text-3xl font-black italic text-emerald-400 mb-6 uppercase">APAC <span class="text-white">ACCESS</span></h1>
-            <input id="pass-input" type="password" placeholder="Chave de Acesso" class="w-full p-4 bg-slate-900 rounded-xl border border-slate-700 mb-4 outline-none focus:border-emerald-500 text-center">
-            <button onclick="checkLogin()" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 font-bold rounded-xl uppercase transition">Entrar no Sistema</button>
+    <div id="tela-login" class="fixed inset-0 bg-slate-900 z-[100] flex items-center justify-center">
+        <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700 text-center shadow-2xl">
+            <h1 class="text-2xl font-black text-emerald-400 mb-6 uppercase">APAC ACESSO</h1>
+            <input id="senha" type="password" placeholder="Senha" class="w-full p-4 bg-slate-900 rounded-xl border border-slate-700 mb-4 outline-none text-center">
+            <button onclick="entrar()" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 font-bold rounded-xl uppercase transition">Entrar</button>
         </div>
     </div>
 
-    <div id="app-content" class="max-w-4xl mx-auto bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-2xl opacity-0 transition-opacity duration-500">
-        <div id="print-area">
-            <h1 class="text-2xl font-black italic text-emerald-400 mb-6 uppercase border-b border-slate-700 pb-4">Laudo de Reengenharia APAC</h1>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <input id="origem" type="text" placeholder="Origem Completa" class="p-4 bg-slate-900 rounded-xl border border-slate-700 outline-none text-sm">
-                <input id="destino" type="text" placeholder="Destino Final" class="p-4 bg-slate-900 rounded-xl border border-slate-700 outline-none text-sm">
-            </div>
-
-            <div class="grid grid-cols-2 gap-4 mb-6">
-                <input id="kml" type="number" value="2.5" step="0.1" class="p-4 bg-slate-900 rounded-xl border border-slate-700 text-sm">
-                <input id="preco" type="number" value="6.15" step="0.01" class="p-4 bg-slate-900 rounded-xl border border-slate-700 text-sm">
-            </div>
-
-            <button onclick="gerarDiagnostico()" id="btn-calc" class="w-full py-4 bg-emerald-600 hover:bg-emerald-500 font-bold rounded-xl uppercase mb-8">Diagnosticar Rota</button>
-
-            <div id="res-box" class="hidden">
-                <div class="grid grid-cols-2 gap-4 mb-6">
-                    <div class="bg-slate-900 p-4 rounded-xl border border-emerald-500/20">
-                        <p class="text-[10px] uppercase text-slate-500">Distância Total</p>
-                        <h2 id="out-dist" class="text-2xl font-bold"></h2>
-                    </div>
-                    <div class="bg-red-500/10 p-4 rounded-xl border border-red-500/20">
-                        <p class="text-[10px] uppercase text-red-400">Prejuízo Estimado</p>
-                        <h2 id="out-perda" class="text-2xl font-bold text-red-500"></h2>
+    <div id="conteudo" class="max-w-4xl mx-auto opacity-0 pointer-events-none transition-opacity duration-500">
+        <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-2xl">
+            <div id="area-impressao">
+                <h1 class="text-2xl font-black italic text-emerald-400 mb-8 uppercase border-b border-slate-700 pb-4">APAC <span class="text-white">Logística</span></h1>
+                
+                <div class="space-y-4 mb-6">
+                    <input id="origem" type="text" placeholder="Origem (Ex: Plínio Kroeff, 1655)" class="w-full p-4 bg-slate-900 rounded-xl border border-slate-700 outline-none text-sm">
+                    <input id="destino" type="text" placeholder="Destino" class="w-full p-4 bg-slate-900 rounded-xl border border-slate-700 outline-none text-sm">
+                    <div class="grid grid-cols-2 gap-4">
+                        <input id="kml" type="number" value="2.5" step="0.1" class="p-4 bg-slate-900 rounded-xl border border-slate-700">
+                        <input id="preco" type="number" value="6.15" step="0.01" class="p-4 bg-slate-900 rounded-xl border border-slate-700">
                     </div>
                 </div>
-                <div id="mapa-frame" class="w-full h-80 rounded-2xl bg-slate-900 border border-slate-700 mb-6"></div>
+
+                <button onclick="rodar()" id="btn-rodar" class="w-full py-5 bg-emerald-600 hover:bg-emerald-500 font-black rounded-xl uppercase mb-8 shadow-lg">Diagnosticar Rota</button>
+
+                <div id="painel-res" class="hidden">
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="bg-slate-900 p-6 rounded-2xl border border-emerald-500/20 text-center">
+                            <p class="text-[10px] text-slate-500 uppercase font-bold">Distância</p>
+                            <h2 id="txt-dist" class="text-3xl font-black"></h2>
+                        </div>
+                        <div class="bg-red-500/10 p-6 rounded-2xl border border-red-500/20 text-center">
+                            <p class="text-[10px] text-red-400 uppercase font-bold">Prejuízo R$</p>
+                            <h2 id="txt-perda" class="text-3xl font-black text-red-500"></h2>
+                        </div>
+                    </div>
+                    <div id="mapa-div" class="w-full h-80 rounded-2xl bg-slate-900 border border-slate-700 mb-6"></div>
+                </div>
             </div>
+
+            <button id="btn-pdf" onclick="pdf()" class="hidden w-full py-3 bg-slate-700 hover:bg-slate-600 rounded-xl text-[10px] font-bold uppercase tracking-widest transition">Baixar Laudo PDF</button>
         </div>
-        
-        <button id="btn-pdf" onclick="baixarPDF()" class="hidden w-full py-3 bg-slate-700 hover:bg-slate-600 rounded-xl text-xs font-bold uppercase tracking-widest transition">Exportar Laudo em PDF</button>
     </div>
 
     <script>
-        let currentPass = "";
-        let map = null;
+        let mapa = null;
+        const senhaCorreta = "apac2026";
 
-        function checkLogin() {
-            const pass = document.getElementById('pass-input').value;
-            if (pass === "apac2026") {
-                currentPass = pass;
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('app-content').classList.remove('opacity-0');
-            } else {
-                alert("Chave Inválida!");
-            }
+        function entrar() {
+            if (document.getElementById('senha').value === senhaCorreta) {
+                document.getElementById('tela-login').classList.add('hidden');
+                document.getElementById('conteudo').classList.replace('opacity-0', 'opacity-100');
+                document.getElementById('conteudo').classList.remove('pointer-events-none');
+            } else { alert("Senha Errada!"); }
         }
 
-        async function gerarDiagnostico() {
-            const btn = document.getElementById('btn-calc');
-            btn.innerText = "PROCESSANDO...";
+        async function rodar() {
+            const btn = document.getElementById('btn-rodar');
+            btn.innerText = "BUSCANDO NO GPS...";
             btn.disabled = true;
 
             try {
                 const res = await fetch('/calcular-real', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify({
                         origem: document.getElementById('origem').value,
                         destino: document.getElementById('destino').value,
-                        consumo_kml: parseFloat(document.getElementById('kml').value),
-                        password: currentPass
+                        consumo_kml: parseFloat(document.getElementById('kml').value)
                     })
                 });
 
-                if (!res.ok) throw new Error("Erro na Chave ou GPS.");
-
                 const data = await res.json();
-                document.getElementById('res-box').classList.remove('hidden');
+                if (!res.ok) throw new Error(data.detail);
+
+                document.getElementById('painel-res').classList.remove('hidden');
                 document.getElementById('btn-pdf').classList.remove('hidden');
-                document.getElementById('out-dist').innerText = data.distancia + " KM";
+                document.getElementById('txt-dist').innerText = data.distancia + " KM";
                 
                 const perda = (data.resultado.total_L - data.resultado.ideal_L) * parseFloat(document.getElementById('preco').value);
-                document.getElementById('out-perda').innerText = "R$ " + perda.toFixed(2);
+                document.getElementById('txt-perda').innerText = "R$ " + perda.toFixed(2);
 
-                if (map) map.remove();
-                map = L.map('mapa-frame').setView([data.diagnostico_infra.lat_o, data.diagnostico_infra.lon_o], 12);
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-                L.marker([data.diagnostico_infra.lat_o, data.diagnostico_infra.lon_o]).addTo(map);
-                L.marker([data.diagnostico_infra.lat_d, data.diagnostico_infra.lon_d]).addTo(map);
-                map.fitBounds([[data.diagnostico_infra.lat_o, data.diagnostico_infra.lon_o], [data.diagnostico_infra.lat_d, data.diagnostico_infra.lon_d]]);
+                if (mapa) mapa.remove();
+                mapa = L.map('mapa-div').setView([data.diagnostico_infra.lat_o, data.diagnostico_infra.lon_o], 12);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapa);
+                L.marker([data.diagnostico_infra.lat_o, data.diagnostico_infra.lon_o]).addTo(mapa);
+                L.marker([data.diagnostico_infra.lat_d, data.diagnostico_infra.lon_d]).addTo(mapa);
+                mapa.fitBounds([[data.diagnostico_infra.lat_o, data.diagnostico_infra.lon_o], [data.diagnostico_infra.lat_d, data.diagnostico_infra.lon_d]]);
 
-            } catch (err) {
-                alert(err.message);
-            } finally {
-                btn.innerText = "Diagnosticar Rota";
-                btn.disabled = false;
-            }
+            } catch (e) { alert("Erro: " + e.message); }
+            finally { btn.innerText = "Diagnosticar Rota"; btn.disabled = false; }
         }
 
-        function baixarPDF() {
-            const element = document.getElementById('print-area');
-            const opt = {
+        function pdf() {
+            const el = document.getElementById('area-impressao');
+            html2pdf().set({
                 margin: 0.5,
-                filename: 'APAC_Laudo_Tecnico.pdf',
-                image: { type: 'jpeg', quality: 0.98 },
+                filename: 'APAC_Laudo.pdf',
                 html2canvas: { scale: 2, backgroundColor: '#1e293b' },
                 jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-            };
-            html2pdf().set(opt).from(element).save();
+            }).from(el).save();
         }
     </script>
 </body>
