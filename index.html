@@ -2,6 +2,7 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>APAC - Brasil v1.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -9,75 +10,60 @@
 </head>
 <body class="bg-slate-900 text-white font-sans p-4">
     <div class="max-w-4xl mx-auto bg-slate-800 p-8 rounded-3xl border border-slate-700 shadow-2xl">
-        <h1 class="text-3xl font-black italic text-emerald-400 mb-8 uppercase tracking-tighter">APAC <span class="text-white text-xs">BRASIL</span></h1>
+        <h1 class="text-3xl font-black italic text-emerald-400 mb-8 uppercase tracking-tighter">APAC <span class="text-white text-xs">LOGÍSTICA</span></h1>
         
         <div class="space-y-4">
-            <input id="origem" type="text" placeholder="Origem (Rua, Cidade ou CEP)" class="w-full p-4 bg-slate-900 rounded-xl border border-slate-700 outline-none focus:border-emerald-500 transition-all">
-            <input id="destino" type="text" placeholder="Destino (Rua, Cidade ou CEP)" class="w-full p-4 bg-slate-900 rounded-xl border border-slate-700 outline-none focus:border-emerald-500 transition-all">
-            <div class="grid grid-cols-2 gap-4">
-                <input id="kml" type="number" value="2.5" step="0.1" class="p-4 bg-slate-900 rounded-xl border border-slate-700 outline-none">
-                <input id="preco" type="number" value="6.15" step="0.01" class="p-4 bg-slate-900 rounded-xl border border-slate-700 outline-none">
+            <div>
+                <label class="text-[10px] text-slate-500 font-bold uppercase ml-2">Ponto de Origem (Endereço Completo)</label>
+                <input id="origem" type="text" placeholder="Ex: Av. Plínio Kroeff, 1655, Porto Alegre" class="w-full p-4 bg-slate-900 rounded-xl border border-slate-700 outline-none focus:border-emerald-500 transition-all text-sm">
             </div>
-            <button onclick="calcularReal()" id="btn" class="w-full py-5 bg-emerald-600 hover:bg-emerald-500 font-black rounded-xl transition shadow-xl uppercase tracking-widest">Diagnosticar Rota</button>
+            <div>
+                <label class="text-[10px] text-slate-500 font-bold uppercase ml-2">Destino Final</label>
+                <input id="destino" type="text" placeholder="Ex: Porto de Santos, SP" class="w-full p-4 bg-slate-900 rounded-xl border border-slate-700 outline-none focus:border-emerald-500 transition-all text-sm">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-[10px] text-slate-500 font-bold uppercase ml-2">KM/L Médio</label>
+                    <input id="kml" type="number" value="2.5" step="0.1" class="w-full p-4 bg-slate-900 rounded-xl border border-slate-700 outline-none">
+                </div>
+                <div>
+                    <label class="text-[10px] text-slate-500 font-bold uppercase ml-2">Preço Diesel (R$)</label>
+                    <input id="preco" type="number" value="6.15" step="0.01" class="w-full p-4 bg-slate-900 rounded-xl border border-slate-700 outline-none">
+                </div>
+            </div>
+            <button onclick="calcularReal()" id="btn" class="w-full py-5 bg-emerald-600 hover:bg-emerald-500 font-black rounded-xl transition shadow-xl uppercase tracking-widest text-sm mt-4">Diagnosticar Rota Brasil</button>
         </div>
 
         <div id="resultado-area" class="mt-10 hidden border-t border-slate-700 pt-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div class="bg-slate-900 p-6 rounded-2xl border border-emerald-500/20">
-                    <p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Distância Real</p>
-                    <h2 id="res-dist" class="text-2xl font-black text-white"></h2>
-                    <p id="res-porcentagem" class="text-emerald-400 font-bold mt-2"></p>
+                    <p class="text-[10px] text-slate-500 uppercase font-bold mb-1">Distância Calculada</p>
+                    <h2 id="res-dist" class="text-3xl font-black text-white">0 KM</h2>
+                    <p id="res-porcentagem" class="text-emerald-400 font-bold mt-2 text-sm italic"></p>
                 </div>
-                <div class="bg-red-500/10 p-6 rounded-2xl border border-red-500/20">
-                    <p class="text-[10px] text-red-400 uppercase font-bold mb-1">Prejuízo na Rota</p>
-                    <h2 id="res-prejuizo" class="text-2xl font-black text-red-500"></h2>
+                <div class="bg-red-500/10 p-6 rounded-2xl border border-red-500/20 text-center">
+                    <p class="text-[10px] text-red-400 uppercase font-bold mb-1 text-left">Prejuízo Estimado</p>
+                    <h2 id="res-prejuizo" class="text-3xl font-black text-red-500">R$ 0,00</h2>
                 </div>
             </div>
-            <div id="mapa" class="w-full h-80 rounded-2xl mt-8 bg-slate-900 border border-slate-700"></div>
+            <div id="mapa" class="w-full h-80 rounded-2xl bg-slate-900 border border-slate-700 z-10"></div>
         </div>
     </div>
 
     <script>
         let map = null;
-      async function calcularReal() {
-    const btn = document.getElementById('btn');
-    btn.innerText = "LOCALIZANDO ENDEREÇOS...";
-    btn.disabled = true;
 
-    const dados = {
-        origem: document.getElementById('origem').value,
-        destino: document.getElementById('destino').value,
-        consumo_kml: parseFloat(document.getElementById('kml').value)
-    };
+        async function calcularReal() {
+            const btn = document.getElementById('btn');
+            const origemInput = document.getElementById('origem').value;
+            const destinoInput = document.getElementById('destino').value;
+            const kmlInput = document.getElementById('kml').value;
+            const precoInput = document.getElementById('preco').value;
 
-    try {
-        const response = await fetch('/calcular-real', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dados)
-        });
-
-        if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err.detail || "Erro desconhecido");
-        }
-
-        const data = await response.json();
-        // ... (resto do seu codigo de exibir resultados e mapa)
-        
-    } catch (error) {
-        alert("ERRO: " + error.message);
-    } finally {
-        btn.innerText = "Diagnosticar Rota";
-        btn.disabled = false;
-    }
-}
-}
+            if (!origemInput || !destinoInput) {
+                alert("Por favor, preencha a origem e o destino.");
+                return;
             }
-        }
-    </script>
-</body>
 
-</html>
-
-
+            btn.innerText = "LOCALIZANDO GPS...";
+            btn.disabled = true;
